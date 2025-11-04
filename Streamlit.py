@@ -27,8 +27,7 @@ csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&
 @st.cache_data
 def cargar_datos(url):
     df = pd.read_csv(url)
-    # Limpiar nombres de columnas: quitar espacios y caracteres extraños
-    df.columns = df.columns.str.strip().str.lower()
+    df.columns = df.columns.str.strip()
     return df
 
 df = cargar_datos(csv_url)
