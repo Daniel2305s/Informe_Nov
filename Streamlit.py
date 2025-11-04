@@ -172,7 +172,7 @@ st.pyplot(fig2)
 df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
 
 # Normalizar datos de tipo pago (con el nuevo nombre de columna)
-df['tipo_pago_norm'] = df['tipopago'].fillna('').astype(str).str.strip().str.lower()
+df['tipo_pago_norm'] = df['tipo pago'].fillna('').astype(str).str.strip().str.lower()
 
 # Filtrar solo ventas completadas
 ventas_completadas_addi = df[df['Estado'].str.lower() == 'completed'].copy()
