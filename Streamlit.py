@@ -165,49 +165,61 @@ st.pyplot(fig2)
 
 
 # ==============================
-# 🆕 Normalizar el campo pago (ANTES de filtrar ventas completadas)
+# 💳 Normalizar y preparar datos de pago
 # ==============================
-df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
 
-# Filtros base (usar pago_norm en vez de pago)
+# Limpieza robusta de los métodos de pago
+df['pago_norm'] = (
+    df['pago']
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .str.replace(r'\s+', ' ', regex=True)  # Normaliza espacios
+)
+
+# Filtramos las ventas completadas nuevamente (por seguridad)
 ventas_completadas = df[df['Estado'].str.lower() == 'completed']
-ventas_devueltas = df[df['Estado'].str.lower() == 'refunded']
-
-
 
 # ==============================
-# 🟣 Resumen Addi / Addi Shop
+# 🟣 Resumen Addi / Addi Shop (robusto)
 # ==============================
 
-# Addi "solo" (exactamente Addi)
-ventas_addi_solo = ventas_completadas[
-    ventas_completadas['pago_norm'] == 'addi'
-]
-
-# Addi Shop (exactamente addi shop)
+# 🔹 Addi Shop (coincide con "addi shop", "addi   shop", etc.)
 ventas_addi_shop = ventas_completadas[
-    ventas_completadas['pago_norm'] == 'addis'
+    ventas_completadas['pago_norm'].str.contains(r'\baddi\s*shop\b', na=False)
 ]
 
-# Addi Total (suma de ambas)
+# 🔹 Addi (solo): incluye "addi" o "addis", pero NO los que dicen "shop"
+ventas_addi_solo = ventas_completadas[
+    (ventas_completadas['pago_norm'].str.contains(r'\badd[i|is]\b', na=False)) &
+    (~ventas_completadas['pago_norm'].str.contains('shop', na=False))
+]
+
+# 🔹 Addi Total = ambos grupos combinados
 ventas_addi_total = pd.concat([ventas_addi_solo, ventas_addi_shop])
 
-# Cantidades de pedidos únicos
+# ==============================
+# 📊 Cálculos de métricas
+# ==============================
+
+# Cantidad de pedidos únicos
 total_addi_solo_ventas = ventas_addi_solo['Pedido #'].nunique()
 total_addi_shop_ventas = ventas_addi_shop['Pedido #'].nunique()
 total_addi_total_ventas = ventas_addi_total['Pedido #'].nunique()
 
-# Totales de dinero
+# Suma de dinero
 total_addi_solo_dinero = ventas_addi_solo['Ventas netas (num)'].sum()
 total_addi_shop_dinero = ventas_addi_shop['Ventas netas (num)'].sum()
 total_addi_total_dinero = ventas_addi_total['Ventas netas (num)'].sum()
 
-# Porcentaje de Addi Shop sobre Addi total
-porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_total_ventas * 100) if total_addi_total_ventas > 0 else 0
-
+# Porcentaje de Addi Shop sobre total Addi
+porcentaje_addi_shop = (
+    (total_addi_shop_ventas / total_addi_total_ventas * 100)
+    if total_addi_total_ventas > 0 else 0
+)
 
 # ==============================
-# 💳 Mostrar métricas en Streamlit
+# 📈 Mostrar métricas en Streamlit
 # ==============================
 st.markdown("### 💳 Resumen de ventas Addi / Addi Shop")
 
@@ -235,6 +247,16 @@ col4.metric(
     "% Addi Shop sobre Addi Total",
     f"{porcentaje_addi_shop:.1f}%"
 )
+
+# ==============================
+# 🧾 (Opcional) Depuración visual
+# ==============================
+with st.expander("🧩 Datos detectados para Addi / Addi Shop (debug)"):
+    st.write("Valores únicos de 'pago_norm':", df['pago_norm'].unique().tolist())
+    st.write("Ventas Addi:", ventas_addi_solo.shape[0])
+    st.write("Ventas Addi Shop:", ventas_addi_shop.shape[0])
+    st.write("Ejemplo Addi Shop:", ventas_addi_shop[['Pedido #', 'pago_norm']].head())
+
 
 
 
