@@ -168,11 +168,24 @@ st.pyplot(fig2)
 # 💳 ANÁLISIS ADDI / ADDI SHOP
 # ==============================
 
+# Buscar automáticamente la columna de tipo de pago
+columna_tipo_pago = None
+for col in df.columns:
+    if 'tipo' in col.lower() and 'pago' in col.lower():
+        columna_tipo_pago = col
+        break
+
+# Si no se encuentra, crear columna vacía
+if columna_tipo_pago is None:
+    df['tipo_pago'] = ''
+    columna_tipo_pago = 'tipo_pago'
+    st.warning("⚠️ No se encontró columna 'tipo pago'. Se creó vacía.")
+
 # Normalizar datos de pago
 df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
 
-# Normalizar datos de tipo pago (con el nuevo nombre de columna)
-df['tipo_pago_norm'] = df['tipo pago'].fillna('').astype(str).str.strip().str.lower()
+# Normalizar datos de tipo pago
+df['tipo_pago_norm'] = df[columna_tipo_pago].fillna('').astype(str).str.strip().str.lower()
 
 # Filtrar solo ventas completadas
 ventas_completadas_addi = df[df['Estado'].str.lower() == 'completed'].copy()
@@ -283,9 +296,11 @@ resumen_texto = f"""
 st.markdown(resumen_texto)
 
 # ==============================
-# 🧩 DEBUG (opcional)
+# 🧩 DEBUG
 # ==============================
 with st.expander("🔍 Ver detalles técnicos (debug)"):
+    st.write("**Columna tipo pago detectada:**", columna_tipo_pago)
+    st.write("**Todas las columnas:**", df.columns.tolist())
     st.write("**Valores únicos en 'pago_norm':**", df['pago_norm'].unique().tolist())
     st.write("**Valores únicos en 'tipo_pago_norm':**", df['tipo_pago_norm'].unique().tolist())
     st.write("**Filas con pago = addi:**", ventas_addi_total.shape[0])
@@ -294,8 +309,7 @@ with st.expander("🔍 Ver detalles técnicos (debug)"):
     
     # Mostrar muestra de datos
     st.write("**Muestra de datos Addi:**")
-    st.dataframe(ventas_addi_total[['Pedido #', 'pago', 'tipo pago', 'Ventas netas']].head(10))
-
+    st.dataframe(ventas_addi_total[['Pedido #', 'pago', columna_tipo_pago, 'Ventas netas']].head(10))
 
 
 
