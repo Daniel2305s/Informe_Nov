@@ -165,42 +165,61 @@ st.pyplot(fig2)
 
 
 # ==============================
-# 🆕 Conteo y dinero por Addi / Addi Shop (CORREGIDO)
+# 🆕 Resumen: Addi (general) y Addi Shop
 # ==============================
 
-# Normalizamos el campo de pago para evitar errores por espacios o mayúsculas
+# Normalizamos el campo pago para evitar errores por mayúsculas o espacios
 ventas_completadas['pago_norm'] = ventas_completadas['pago'].astype(str).str.strip().str.lower()
 
-# Filtrar exactamente Addi
-ventas_addi = ventas_completadas[ventas_completadas['pago_norm'] == "addi"]
+# 🔹 Addi Total (incluye Addi y Addi Shop)
+ventas_addi_total = ventas_completadas[
+    ventas_completadas['pago_norm'].str.contains("addi", na=False)  # cuenta cualquier addi
+]
 
-# Filtrar Addi Shop (usa contains para capturar variaciones como "addi shop orgánico")
-ventas_addi_shop = ventas_completadas[ventas_completadas['pago_norm'].str.contains("addi shop", na=False)]
+# 🔹 Addi Shop (solo ventas que contengan específicamente "addi shop")
+ventas_addi_shop = ventas_completadas[
+    ventas_completadas['pago_norm'].str.contains("addi shop", na=False)
+]
 
-# Cantidades
-cantidad_addi = ventas_addi.shape[0]
-cantidad_addi_shop = ventas_addi_shop.shape[0]
+# 🧮 Cantidades
+total_addi_ventas = ventas_addi_total.shape[0]
+total_addi_shop_ventas = ventas_addi_shop.shape[0]
 
-# Totales de dinero
-dinero_addi = ventas_addi['Ventas netas (num)'].sum()
-dinero_addi_shop = ventas_addi_shop['Ventas netas (num)'].sum()
+# 💵 Totales en dinero
+total_addi_dinero = ventas_addi_total['Ventas netas (num)'].sum()
+total_addi_shop_dinero = ventas_addi_shop['Ventas netas (num)'].sum()
 
-# Mostrar en streamlit
-st.markdown("### 💳 Detalle pagos Addi / Addi Shop")
+# 📊 Porcentaje que representa Addi Shop de Addi total
+if total_addi_ventas > 0:
+    porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_ventas) * 100
+else:
+    porcentaje_addi_shop = 0
 
-col_a, col_b = st.columns(2)
+# ==============================
+# Mostrar en Streamlit
+# ==============================
+st.markdown("### 💳 Resumen de ventas Addi / Addi Shop")
 
-col_a.metric(
-    "Addi",
-    f"{cantidad_addi} ventas",
-    f"${dinero_addi:,.0f}"
+col1, col2, col3 = st.columns(3)
+
+col1.metric(
+    "Addi (Total)",
+    f"{total_addi_ventas} ventas",
+    f"${total_addi_dinero:,.0f}"
 )
 
-col_b.metric(
-    "Addi Shop",
-    f"{cantidad_addi_shop} ventas",
-    f"${dinero_addi_shop:,.0f}"
+col2.metric(
+    "Addi Shop (Solo)",
+    f"{total_addi_shop_ventas} ventas",
+    f"${total_addi_shop_dinero:,.0f}"
 )
+
+col3.metric(
+    "% Addi Shop sobre Addi",
+    f"{porcentaje_addi_shop:.1f}%",
+    ""
+)
+
 
 
 st.markdown("### 🧾 Tabla Interactiva de Ventas")
