@@ -168,27 +168,11 @@ st.pyplot(fig2)
 # 💳 ANÁLISIS ADDI / ADDI SHOP
 # ==============================
 
-# 🔍 Debug: Ver columnas disponibles (opcional, puedes comentar después)
-st.write("🔍 **Columnas disponibles:**", df.columns.tolist())
-
-# Normalizar nombres de columnas para el análisis
-# Buscar la columna 'tipo' sin importar mayúsculas/espacios
-columna_tipo = None
-for col in df.columns:
-    if 'tipo' in col.lower().strip():
-        columna_tipo = col
-        break
-
-# Si no existe la columna tipo, crearla vacía
-if columna_tipo is None:
-    df['tipo'] = ''
-    columna_tipo = 'tipo'
-
 # Normalizar datos de pago
 df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
 
-# Normalizar datos de tipo
-df['tipo_norm'] = df[columna_tipo].fillna('').astype(str).str.strip().str.lower()
+# Normalizar datos de tipo pago (con el nuevo nombre de columna)
+df['tipo_pago_norm'] = df['tipo pago'].fillna('').astype(str).str.strip().str.lower()
 
 # Filtrar solo ventas completadas
 ventas_completadas_addi = df[df['Estado'].str.lower() == 'completed'].copy()
@@ -202,14 +186,14 @@ ventas_addi_total = ventas_completadas_addi[
     ventas_completadas_addi['pago_norm'] == 'addi'
 ]
 
-# 🔹 Addi Shop (pago = addi y tipo = shop)
+# 🔹 Addi Shop (pago = addi y tipo pago = shop)
 ventas_addi_shop = ventas_addi_total[
-    ventas_addi_total['tipo_norm'] == 'shop'
+    ventas_addi_total['tipo_pago_norm'] == 'shop'
 ]
 
-# 🔹 Addi Solo/Normal (pago = addi y tipo vacío)
+# 🔹 Addi Solo/Normal (pago = addi y tipo pago vacío)
 ventas_addi_solo = ventas_addi_total[
-    ventas_addi_total['tipo_norm'] == ''
+    ventas_addi_total['tipo_pago_norm'] == ''
 ]
 
 # ==============================
@@ -302,16 +286,15 @@ st.markdown(resumen_texto)
 # 🧩 DEBUG (opcional)
 # ==============================
 with st.expander("🔍 Ver detalles técnicos (debug)"):
-    st.write("**Columna 'tipo' detectada:**", columna_tipo)
     st.write("**Valores únicos en 'pago_norm':**", df['pago_norm'].unique().tolist())
-    st.write("**Valores únicos en 'tipo_norm':**", df['tipo_norm'].unique().tolist())
+    st.write("**Valores únicos en 'tipo_pago_norm':**", df['tipo_pago_norm'].unique().tolist())
     st.write("**Filas con pago = addi:**", ventas_addi_total.shape[0])
     st.write("**Filas con addi shop:**", ventas_addi_shop.shape[0])
     st.write("**Filas con addi normal:**", ventas_addi_solo.shape[0])
     
     # Mostrar muestra de datos
     st.write("**Muestra de datos Addi:**")
-    st.dataframe(ventas_addi_total[['Pedido #', 'pago', columna_tipo, 'Ventas netas']].head(10))
+    st.dataframe(ventas_addi_total[['Pedido #', 'pago', 'tipo pago', 'Ventas netas']].head(10))
 
 
 
