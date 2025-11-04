@@ -164,6 +164,40 @@ plt.ylabel('Cantidad vendida')
 st.pyplot(fig2)
 
 
+
+# ==============================
+# 🔍 DIAGNÓSTICO VENTAS ADDI
+# ==============================
+st.markdown("### 🔍 Diagnóstico de ventas Addi")
+
+# Total de ventas con pago que contenga "addi" (sin importar mayúsculas)
+todas_ventas_addi_raw = df[df['pago'].str.lower().str.contains('addi', na=False)]
+st.write(f"**Total filas con 'addi' en método de pago (sin filtrar):** {todas_ventas_addi_raw.shape[0]}")
+
+# Por estado
+st.write("**Desglose por Estado:**")
+desglose_estado = todas_ventas_addi_raw.groupby('Estado').size()
+st.write(desglose_estado)
+
+# Ver variaciones del método de pago
+st.write("**Variaciones del método de pago 'addi':**")
+variaciones_pago = todas_ventas_addi_raw['pago'].unique().tolist()
+st.write(variaciones_pago)
+
+# Ver si hay pedidos duplicados
+st.write("**Pedidos únicos vs total filas:**")
+st.write(f"- Total filas: {todas_ventas_addi_raw.shape[0]}")
+st.write(f"- Pedidos únicos: {todas_ventas_addi_raw['Pedido #'].nunique()}")
+
+# Mostrar todas las ventas Addi para revisión manual
+st.write("**Todas las ventas con método 'addi' (completas y no completas):**")
+st.dataframe(todas_ventas_addi_raw[['Pedido #', 'Estado', 'pago', columna_tipo_pago, 'Ventas netas']].sort_values('Pedido #'))
+
+st.markdown("---")
+
+
+
+
 # ==============================
 # 💳 ANÁLISIS ADDI / ADDI SHOP
 # ==============================
