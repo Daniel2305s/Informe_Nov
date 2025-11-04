@@ -165,6 +165,210 @@ st.pyplot(fig2)
 
 
 
+# ==============================
+# 🔄 ANÁLISIS DE RECOMPRAS
+# ==============================
+
+st.markdown("---")
+st.markdown("### 🔄 Análisis de Recompras (Clientes Returning)")
+
+# Buscar la columna de tipo de cliente
+columna_tipo_cliente = None
+posibles_nombres_cliente = ['Tipo de cliente', 'tipo de cliente', 'tipo_cliente', 'tipo cliente']
+
+for nombre in posibles_nombres_cliente:
+    if nombre in df.columns:
+        columna_tipo_cliente = nombre
+        break
+
+# Si no se encuentra con nombres exactos, buscar por contenido
+if columna_tipo_cliente is None:
+    for col in df.columns:
+        if 'tipo' in col.lower() and 'cliente' in col.lower():
+            columna_tipo_cliente = col
+            break
+
+# Verificar si existe la columna
+if columna_tipo_cliente is None:
+    st.warning("⚠️ No se encontró la columna 'Tipo de cliente' en los datos.")
+else:
+    # Normalizar valores
+    df['tipo_cliente_norm'] = df[columna_tipo_cliente].fillna('').astype(str).str.strip().str.lower()
+    
+    # Filtrar solo ventas completadas
+    ventas_completadas_recompra = df[df['Estado'].str.lower() == 'completed'].copy()
+    
+    # 🔹 Clientes returning (recompra)
+    clientes_returning = ventas_completadas_recompra[
+        ventas_completadas_recompra['tipo_cliente_norm'] == 'returning'
+    ]
+    
+    # 🔹 Clientes nuevos
+    clientes_nuevos = ventas_completadas_recompra[
+        ventas_completadas_recompra['tipo_cliente_norm'] == 'new'
+    ]
+    
+    # ==============================
+    # 📊 MÉTRICAS DE RECOMPRA
+    # ==============================
+    
+    # Totales generales
+    total_clientes_completadas = ventas_completadas_recompra['Pedido #'].nunique()
+    total_valor_completadas = ventas_completadas_recompra['Ventas netas (num)'].sum()
+    
+    # Clientes returning
+    total_returning_ventas = clientes_returning['Pedido #'].nunique()
+    total_returning_valor = clientes_returning['Ventas netas (num)'].sum()
+    
+    # Clientes nuevos
+    total_nuevos_ventas = clientes_nuevos['Pedido #'].nunique()
+    total_nuevos_valor = clientes_nuevos['Ventas netas (num)'].sum()
+    
+    # Porcentajes
+    porcentaje_returning = (total_returning_ventas / total_clientes_completadas * 100) if total_clientes_completadas > 0 else 0
+    porcentaje_nuevos = (total_nuevos_ventas / total_clientes_completadas * 100) if total_clientes_completadas > 0 else 0
+    
+    # Ticket promedio
+    ticket_promedio_returning = total_returning_valor / total_returning_ventas if total_returning_ventas > 0 else 0
+    ticket_promedio_nuevos = total_nuevos_valor / total_nuevos_ventas if total_nuevos_ventas > 0 else 0
+    
+    # ==============================
+    # 🎨 MOSTRAR MÉTRICAS
+    # ==============================
+    
+    # Primera fila: Totales
+    col1, col2, col3 = st.columns(3)
+    
+    col1.metric(
+        "📊 Total Ventas Completadas",
+        f"{total_clientes_completadas} pedidos"
+    )
+    
+    col2.metric(
+        "🔄 Recompras (Returning)",
+        f"{total_returning_ventas} pedidos",
+        f"{porcentaje_returning:.1f}% del total"
+    )
+    
+    col3.metric(
+        "🆕 Clientes Nuevos",
+        f"{total_nuevos_ventas} pedidos",
+        f"{porcentaje_nuevos:.1f}% del total"
+    )
+    
+    st.markdown("---")
+    
+    # Segunda fila: Valores monetarios
+    col4, col5, col6 = st.columns(3)
+    
+    col4.metric(
+        "💰 Valor Total",
+        f"${total_valor_completadas:,.0f}"
+    )
+    
+    col5.metric(
+        "💵 Valor Returning",
+        f"${total_returning_valor:,.0f}",
+        f"{(total_returning_valor/total_valor_completadas*100):.1f}% del total" if total_valor_completadas > 0 else "0%"
+    )
+    
+    col6.metric(
+        "💵 Valor Nuevos",
+        f"${total_nuevos_valor:,.0f}",
+        f"{(total_nuevos_valor/total_valor_completadas*100):.1f}% del total" if total_valor_completadas > 0 else "0%"
+    )
+    
+    st.markdown("---")
+    
+    # Tercera fila: Ticket promedio
+    col7, col8 = st.columns(2)
+    
+    col7.metric(
+        "🎫 Ticket Promedio - Returning",
+        f"${ticket_promedio_returning:,.0f}"
+    )
+    
+    col8.metric(
+        "🎫 Ticket Promedio - Nuevos",
+        f"${ticket_promedio_nuevos:,.0f}"
+    )
+    
+    # ==============================
+    # 📋 RESUMEN DETALLADO
+    # ==============================
+    st.markdown("---")
+    st.markdown("#### 📋 Resumen de Recompras")
+    
+    resumen_recompra = f"""
+    **Clientes Returning (Recompra):**
+    - 🛒 Ventas: **{total_returning_ventas}** pedidos (**{porcentaje_returning:.1f}%** del total)
+    - 💰 Valor total: **${total_returning_valor:,.0f}**
+    - 🎫 Ticket promedio: **${ticket_promedio_returning:,.0f}**
+    
+    **Clientes Nuevos:**
+    - 🛒 Ventas: **{total_nuevos_ventas}** pedidos (**{porcentaje_nuevos:.1f}%** del total)
+    - 💰 Valor total: **${total_nuevos_valor:,.0f}**
+    - 🎫 Ticket promedio: **${ticket_promedio_nuevos:,.0f}**
+    
+    **Insight:**
+    - {"✅ Los clientes returning tienen un ticket promedio mayor" if ticket_promedio_returning > ticket_promedio_nuevos else "✅ Los clientes nuevos tienen un ticket promedio mayor"}
+    - {"🎯 Tasa de recompra saludable (>25%)" if porcentaje_returning > 25 else "⚠️ Oportunidad de mejorar la tasa de recompra (<25%)"}
+    """
+    
+    st.markdown(resumen_recompra)
+    
+    # ==============================
+    # 📊 GRÁFICO DE COMPARACIÓN
+    # ==============================
+    
+    st.markdown("#### 📊 Comparación Visual")
+    
+    import matplotlib.pyplot as plt
+    
+    # Gráfico de barras comparativo
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    
+    # Gráfico 1: Cantidad de ventas
+    categorias = ['Returning', 'Nuevos']
+    ventas = [total_returning_ventas, total_nuevos_ventas]
+    colores = ['#e72380', '#ed6da6']
+    
+    ax1.bar(categorias, ventas, color=colores)
+    ax1.set_title('Cantidad de Ventas por Tipo de Cliente')
+    ax1.set_ylabel('Número de Pedidos')
+    ax1.grid(axis='y', alpha=0.3)
+    
+    # Añadir valores en las barras
+    for i, v in enumerate(ventas):
+        ax1.text(i, v + max(ventas)*0.02, str(v), ha='center', fontweight='bold')
+    
+    # Gráfico 2: Valor total
+    valores = [total_returning_valor, total_nuevos_valor]
+    
+    ax2.bar(categorias, valores, color=colores)
+    ax2.set_title('Valor Total por Tipo de Cliente')
+    ax2.set_ylabel('Valor en $')
+    ax2.grid(axis='y', alpha=0.3)
+    
+    # Añadir valores en las barras
+    for i, v in enumerate(valores):
+        ax2.text(i, v + max(valores)*0.02, f'${v:,.0f}', ha='center', fontweight='bold', fontsize=9)
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # ==============================
+    # 🧩 DEBUG (opcional)
+    # ==============================
+    with st.expander("🔍 Ver detalles técnicos (debug)"):
+        st.write("**Columna 'Tipo de cliente' detectada:**", columna_tipo_cliente)
+        st.write("**Valores únicos en tipo de cliente:**", df['tipo_cliente_norm'].unique().tolist())
+        st.write("**Distribución completa:**")
+        st.write(ventas_completadas_recompra['tipo_cliente_norm'].value_counts())
+        
+        # Mostrar muestra de datos returning
+        st.write("**Muestra de clientes Returning:**")
+        st.dataframe(clientes_returning[['Pedido #', 'Fecha', columna_tipo_cliente, 'Ventas netas']].head(10))
 
 
 
