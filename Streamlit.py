@@ -165,26 +165,28 @@ st.pyplot(fig2)
 
 
 # ==============================
-# 🆕 Conteo y dinero por método Addi / Addi Shop
+# 🆕 Conteo y dinero por Addi / Addi Shop (CORREGIDO)
 # ==============================
 
-# Normalizar texto de pago (por si hay espacios o mayúsculas)
-df['pago'] = df['pago'].str.strip().str.lower()
+# Normalizamos el campo de pago para evitar errores por espacios o mayúsculas
+ventas_completadas['pago_norm'] = ventas_completadas['pago'].astype(str).str.strip().str.lower()
 
-# Filtrar según método de pago
-ventas_addi = ventas_completadas[df['pago'] == "addi"]
-ventas_addi_shop = ventas_completadas[df['pago'] == "addi shop"]
+# Filtrar exactamente Addi
+ventas_addi = ventas_completadas[ventas_completadas['pago_norm'] == "addi"]
+
+# Filtrar Addi Shop (usa contains para capturar variaciones como "addi shop orgánico")
+ventas_addi_shop = ventas_completadas[ventas_completadas['pago_norm'].str.contains("addi shop", na=False)]
 
 # Cantidades
 cantidad_addi = ventas_addi.shape[0]
 cantidad_addi_shop = ventas_addi_shop.shape[0]
 
-# Totales en dinero
+# Totales de dinero
 dinero_addi = ventas_addi['Ventas netas (num)'].sum()
 dinero_addi_shop = ventas_addi_shop['Ventas netas (num)'].sum()
 
-# Mostrar métricas en streamlit
-st.markdown("### 💳 Detalle de pagos Addi / Addi Shop")
+# Mostrar en streamlit
+st.markdown("### 💳 Detalle pagos Addi / Addi Shop")
 
 col_a, col_b = st.columns(2)
 
