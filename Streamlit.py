@@ -165,38 +165,43 @@ st.pyplot(fig2)
 
 
 # ==============================
-# 🆕 Resumen: Addi (general) y Addi Shop
+# 🆕 Normalizar el campo pago (ANTES de filtrar ventas completadas)
+# ==============================
+df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
+
+# Filtros base (usar pago_norm en vez de pago)
+ventas_completadas = df[df['Estado'].str.lower() == 'completed']
+ventas_devueltas = df[df['Estado'].str.lower() == 'refunded']
+
+
+# ==============================
+# 🟣 Resumen Addi / Addi Shop (CORRECTO)
 # ==============================
 
-# Normalizamos el campo pago para evitar errores por mayúsculas o espacios
-ventas_completadas['pago_norm'] = ventas_completadas['pago'].astype(str).str.strip().str.lower()
-
-# 🔹 Addi Total (incluye Addi y Addi Shop)
+# Addi Total (incluye Addi Shop)
 ventas_addi_total = ventas_completadas[
-    ventas_completadas['pago_norm'].str.contains("addi", na=False)  # cuenta cualquier addi
+    ventas_completadas['pago_norm'].str.contains(r'\baddi\b', na=False)
 ]
 
-# 🔹 Addi Shop (solo ventas que contengan específicamente "addi shop")
+# Addi Shop (solo los exactos que contienen "addi shop")
 ventas_addi_shop = ventas_completadas[
-    ventas_completadas['pago_norm'].str.contains("addi shop", na=False)
+    ventas_completadas['pago_norm'].str.contains(r'\baddi shop\b', na=False)
 ]
 
-# 🧮 Cantidades
-total_addi_ventas = ventas_addi_total.shape[0]
-total_addi_shop_ventas = ventas_addi_shop.shape[0]
+# Cantidades
+total_addi_ventas = ventas_addi_total['Pedido #'].nunique()
+total_addi_shop_ventas = ventas_addi_shop['Pedido #'].nunique()
 
-# 💵 Totales en dinero
+# Totales de dinero
 total_addi_dinero = ventas_addi_total['Ventas netas (num)'].sum()
 total_addi_shop_dinero = ventas_addi_shop['Ventas netas (num)'].sum()
 
-# 📊 Porcentaje que representa Addi Shop de Addi total
-if total_addi_ventas > 0:
-    porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_ventas) * 100
-else:
-    porcentaje_addi_shop = 0
+# Porcentaje de Addi Shop sobre Addi Total
+porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_ventas * 100) if total_addi_ventas > 0 else 0
+
 
 # ==============================
-# Mostrar en Streamlit
+# Mostrar métricas
 # ==============================
 st.markdown("### 💳 Resumen de ventas Addi / Addi Shop")
 
@@ -216,9 +221,9 @@ col2.metric(
 
 col3.metric(
     "% Addi Shop sobre Addi",
-    f"{porcentaje_addi_shop:.1f}%",
-    ""
+    f"{porcentaje_addi_shop:.1f}%"
 )
+
 
 
 
