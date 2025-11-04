@@ -164,6 +164,41 @@ plt.ylabel('Cantidad vendida')
 st.pyplot(fig2)
 
 
+# ==============================
+# 🆕 Conteo y dinero por método Addi / Addi Shop
+# ==============================
+
+# Normalizar texto de pago (por si hay espacios o mayúsculas)
+df['pago'] = df['pago'].str.strip().str.lower()
+
+# Filtrar según método de pago
+ventas_addi = ventas_completadas[df['pago'] == "addi"]
+ventas_addi_shop = ventas_completadas[df['pago'] == "addi shop"]
+
+# Cantidades
+cantidad_addi = ventas_addi.shape[0]
+cantidad_addi_shop = ventas_addi_shop.shape[0]
+
+# Totales en dinero
+dinero_addi = ventas_addi['Ventas netas (num)'].sum()
+dinero_addi_shop = ventas_addi_shop['Ventas netas (num)'].sum()
+
+# Mostrar métricas en streamlit
+st.markdown("### 💳 Detalle de pagos Addi / Addi Shop")
+
+col_a, col_b = st.columns(2)
+
+col_a.metric(
+    "Addi",
+    f"{cantidad_addi} ventas",
+    f"${dinero_addi:,.0f}"
+)
+
+col_b.metric(
+    "Addi Shop",
+    f"{cantidad_addi_shop} ventas",
+    f"${dinero_addi_shop:,.0f}"
+)
 
 
 st.markdown("### 🧾 Tabla Interactiva de Ventas")
