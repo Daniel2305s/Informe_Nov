@@ -168,18 +168,50 @@ st.pyplot(fig2)
 # 💳 ANÁLISIS ADDI / ADDI SHOP
 # ==============================
 
-# Buscar automáticamente la columna de tipo de pago
+# Ver columnas disponibles
+st.write("🔍 **Columnas del DataFrame:**")
+st.write(df.columns.tolist())
+
+# Intentar encontrar la columna de tipo pago de múltiples formas
 columna_tipo_pago = None
-for col in df.columns:
-    if 'tipo' in col.lower() and 'pago' in col.lower():
-        columna_tipo_pago = col
+
+# Método 1: Buscar por nombre exacto (varias variaciones)
+posibles_nombres = ['tipo pago', 'tipo_pago', 'tipopago', 'Tipo pago', 'Tipo Pago', 'TIPO PAGO']
+for nombre in posibles_nombres:
+    if nombre in df.columns:
+        columna_tipo_pago = nombre
+        st.success(f"✅ Columna encontrada: '{columna_tipo_pago}'")
         break
 
-# Si no se encuentra, crear columna vacía
+# Método 2: Buscar por contenido (contiene 'tipo' y 'pago')
+if columna_tipo_pago is None:
+    for col in df.columns:
+        col_lower = col.lower().strip()
+        if 'tipo' in col_lower and 'pago' in col_lower:
+            columna_tipo_pago = col
+            st.success(f"✅ Columna encontrada por búsqueda: '{columna_tipo_pago}'")
+            break
+
+# Método 3: Si tienes la columna al lado de 'pago', usar índice
+if columna_tipo_pago is None:
+    try:
+        # Encontrar índice de 'pago'
+        idx_pago = df.columns.tolist().index('pago')
+        # La columna 'tipo pago' debería estar en el siguiente índice
+        if idx_pago + 1 < len(df.columns):
+            columna_tipo_pago = df.columns[idx_pago + 1]
+            st.info(f"ℹ️ Usando columna siguiente a 'pago': '{columna_tipo_pago}'")
+    except ValueError:
+        pass
+
+# Si aún no se encuentra, crear vacía
 if columna_tipo_pago is None:
     df['tipo_pago'] = ''
     columna_tipo_pago = 'tipo_pago'
     st.warning("⚠️ No se encontró columna 'tipo pago'. Se creó vacía.")
+else:
+    # Mostrar valores únicos de la columna encontrada
+    st.write(f"**Valores únicos en '{columna_tipo_pago}':**", df[columna_tipo_pago].unique().tolist())
 
 # Normalizar datos de pago
 df['pago_norm'] = df['pago'].astype(str).str.strip().str.lower()
@@ -294,22 +326,6 @@ resumen_texto = f"""
 """
 
 st.markdown(resumen_texto)
-
-# ==============================
-# 🧩 DEBUG
-# ==============================
-with st.expander("🔍 Ver detalles técnicos (debug)"):
-    st.write("**Columna tipo pago detectada:**", columna_tipo_pago)
-    st.write("**Todas las columnas:**", df.columns.tolist())
-    st.write("**Valores únicos en 'pago_norm':**", df['pago_norm'].unique().tolist())
-    st.write("**Valores únicos en 'tipo_pago_norm':**", df['tipo_pago_norm'].unique().tolist())
-    st.write("**Filas con pago = addi:**", ventas_addi_total.shape[0])
-    st.write("**Filas con addi shop:**", ventas_addi_shop.shape[0])
-    st.write("**Filas con addi normal:**", ventas_addi_solo.shape[0])
-    
-    # Mostrar muestra de datos
-    st.write("**Muestra de datos Addi:**")
-    st.dataframe(ventas_addi_total[['Pedido #', 'pago', columna_tipo_pago, 'Ventas netas']].head(10))
 
 
 
