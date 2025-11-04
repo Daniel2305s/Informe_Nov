@@ -174,53 +174,65 @@ ventas_completadas = df[df['Estado'].str.lower() == 'completed']
 ventas_devueltas = df[df['Estado'].str.lower() == 'refunded']
 
 
+
 # ==============================
-# 🟣 Resumen Addi / Addi Shop (CORRECTO)
+# 🟣 Resumen Addi / Addi Shop
 # ==============================
 
-# Addi Total (incluye Addi Shop)
-ventas_addi_total = ventas_completadas[
-    ventas_completadas['pago_norm'].str.contains(r'\baddi\b', na=False)
+# Addi "solo" (exactamente Addi)
+ventas_addi_solo = ventas_completadas[
+    ventas_completadas['pago_norm'] == 'addi'
 ]
 
-# Addi Shop (solo los exactos que contienen "addi shop")
+# Addi Shop (exactamente addi shop)
 ventas_addi_shop = ventas_completadas[
-    ventas_completadas['pago_norm'].str.contains(r'\baddi shop\b', na=False)
+    ventas_completadas['pago_norm'] == 'addi shop'
 ]
 
-# Cantidades
-total_addi_ventas = ventas_addi_total['Pedido #'].nunique()
+# Addi Total (suma de ambas)
+ventas_addi_total = pd.concat([ventas_addi_solo, ventas_addi_shop])
+
+# Cantidades de pedidos únicos
+total_addi_solo_ventas = ventas_addi_solo['Pedido #'].nunique()
 total_addi_shop_ventas = ventas_addi_shop['Pedido #'].nunique()
+total_addi_total_ventas = ventas_addi_total['Pedido #'].nunique()
 
 # Totales de dinero
-total_addi_dinero = ventas_addi_total['Ventas netas (num)'].sum()
+total_addi_solo_dinero = ventas_addi_solo['Ventas netas (num)'].sum()
 total_addi_shop_dinero = ventas_addi_shop['Ventas netas (num)'].sum()
+total_addi_total_dinero = ventas_addi_total['Ventas netas (num)'].sum()
 
-# Porcentaje de Addi Shop sobre Addi Total
-porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_ventas * 100) if total_addi_ventas > 0 else 0
+# Porcentaje de Addi Shop sobre Addi total
+porcentaje_addi_shop = (total_addi_shop_ventas / total_addi_total_ventas * 100) if total_addi_total_ventas > 0 else 0
 
 
 # ==============================
-# Mostrar métricas
+# 💳 Mostrar métricas en Streamlit
 # ==============================
 st.markdown("### 💳 Resumen de ventas Addi / Addi Shop")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(
-    "Addi (Total)",
-    f"{total_addi_ventas} ventas",
-    f"${total_addi_dinero:,.0f}"
+    "Addi (Solo)",
+    f"{total_addi_solo_ventas} ventas",
+    f"${total_addi_solo_dinero:,.0f}"
 )
 
 col2.metric(
-    "Addi Shop (Solo)",
+    "Addi Shop",
     f"{total_addi_shop_ventas} ventas",
     f"${total_addi_shop_dinero:,.0f}"
 )
 
 col3.metric(
-    "% Addi Shop sobre Addi",
+    "Addi Total",
+    f"{total_addi_total_ventas} ventas",
+    f"${total_addi_total_dinero:,.0f}"
+)
+
+col4.metric(
+    "% Addi Shop sobre Addi Total",
     f"{porcentaje_addi_shop:.1f}%"
 )
 
