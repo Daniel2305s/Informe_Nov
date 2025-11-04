@@ -186,7 +186,7 @@ ventas_addi_solo = ventas_completadas[
 
 # Addi Shop (exactamente addi shop)
 ventas_addi_shop = ventas_completadas[
-    ventas_completadas['pago_norm'] == 'addi shop'
+    ventas_completadas['pago_norm'] == 'addis'
 ]
 
 # Addi Total (suma de ambas)
